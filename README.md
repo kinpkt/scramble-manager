@@ -1,3 +1,7 @@
+# scramble-manager
+
+This web application is for organizing scramble .zip files from WCA's TNoodle into structured folders based on event's stage and date.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
