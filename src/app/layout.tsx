@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Prompt } from 'next/font/google';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import './styles/global.css';
 
 const prompt = Prompt({
@@ -17,9 +18,10 @@ export const metadata: Metadata = {
 export default function RootLayout({children,}: {children: React.ReactNode;}) {
     return (
         <html lang="en">
-            <body className={prompt.className}>
-                <Header />
-                {children}
+            <body className={`${prompt.className} d-flex flex-column min-vh-100`}>
+                <Header/>
+                <main className='flex-grow-1'>{children}</main>
+                <Footer/>
             </body>
         </html>
     );

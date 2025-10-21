@@ -1,6 +1,6 @@
 interface Competition
 {
-    competitionName: string;
+    name: string;
     events: Event[];
     schedule: Schedule;
 }
@@ -82,3 +82,17 @@ interface EventGroupDetail
     eventGroupNumber: number;
     eventStartTime: Date;
 }
+
+export type {
+    Competition,
+    Event,
+    Round,
+    TimeLimit,
+    AdvancementCondition,
+    Schedule,
+    Venue,
+    Room,
+    Activity,
+    EventDetail,
+    EventGroupDetail
+};
