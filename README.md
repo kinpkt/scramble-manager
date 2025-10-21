@@ -2,7 +2,12 @@
 
 This web application is for organizing scramble .zip files from WCA's TNoodle into structured folders based on event's stage and date.
 
+Some of the codes were modified from CristCuber's [scramble-organizer](https://www.github.com/cristcuber/scramble-organizer) (Originally written in Golang)
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
 
 ## Getting Started
 

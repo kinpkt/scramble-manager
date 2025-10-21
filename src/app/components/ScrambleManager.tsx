@@ -2,14 +2,27 @@
 
 import { Container, Button, Form, InputGroup } from 'react-bootstrap';
 import { useState } from 'react';
+import type { ChangeEvent } from 'react';
 import axios from 'axios';
+
+interface WCIF {
+    id: string;
+    name: string;
+    [key: string]: any;
+}
+
+interface APIResult {
+    success?: boolean;
+    message?: string;
+    [key: string]: any;
+}
 
 const ScrambleManager = () => 
 {
-    const [competitionID, setCompetitionID] = useState('');
-    const [wcif, setWCIF] = useState(null);
-    const [scrambleZip, setScrambleZip] = useState(null);
-    const [apiResult, setAPIResult] = useState(null);
+    const [competitionID, setCompetitionID] = useState<String>('');
+    const [wcif, setWCIF] = useState<WCIF|null>(null);
+    const [scrambleZip, setScrambleZip] = useState<File|null>(null);
+    const [apiResult, setAPIResult] = useState<APIResult|null>(null);
 
     const onFetchWCIFClick = async () =>
     {
@@ -34,6 +47,12 @@ const ScrambleManager = () =>
             alert('Failed to fetch WCIF');
         }
     }
+
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        setScrambleZip(file);
+    };
+
 
     const onSubmitZipClick = async () =>
     {
@@ -82,7 +101,7 @@ const ScrambleManager = () =>
                         accept='.zip'
                         placeholder='Scrambles .zip File'
                         aria-label='Scrambles .zip File'
-                        onChange={(e) => setScrambleZip(e.target.files[0])}
+                        onChange={handleFileChange}
                     />
                     <Button variant='dark' onClick={onSubmitZipClick}>Submit</Button>
                 </InputGroup>

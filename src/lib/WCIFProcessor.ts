@@ -1,4 +1,4 @@
-const WCIFProcessor = (wcif) =>
+const WCIFProcessor = (wcif: any) =>
 {
     return {};
 }
