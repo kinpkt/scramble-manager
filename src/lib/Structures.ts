@@ -42,22 +42,22 @@ interface Schedule
 
 interface Venue
 {
-    venueID: number;
-    venueName: string;
+    id: number;
+    name: string;
     rooms: Room[];
 }
 
 interface Room
 {
-    roomID: number;
-    roomName: string;
+    id: number;
+    name: string;
     activities: Activity[];
 }
 
 interface Activity
 {
-    activityID: number;
-    activityName: string;
+    id: number;
+    name: string;
     activityCode: string;
     startTime: Date;
     endTime: Date;
@@ -71,7 +71,7 @@ interface EventDetail
     eventVenue: string;
     eventRoom: string;
     eventRound: number;
-    eventAttempt: number;
+    eventAttempt?: number;
     eventGroupDetails: EventGroupDetail[];
     eventStartTime: Date;
 }

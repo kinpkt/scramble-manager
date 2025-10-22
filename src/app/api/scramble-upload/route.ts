@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import WCIFProcessor from '@/lib/WCIFProcessor';
-import type { Competition } from '@/lib/Structure';
+import type { Competition } from '@/lib/Structures';
 
 export async function POST(request: Request)
 {

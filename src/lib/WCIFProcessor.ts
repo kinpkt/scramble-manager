@@ -1,9 +1,18 @@
-import type { Competition, Venue } from '@/lib/Structure';
+import type { Competition, Venue, EventDetail, EventGroupDetail } from '@/lib/Structures';
 import AdmZip from 'adm-zip';
 import type { IZipEntry } from 'adm-zip';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { EventCodeToFullMap } from '@/lib/EventIDMapping';
+
+const getAlphabetFromNumber = (num: number) =>
+{
+    if (num < 1 || num > 26)
+        return ''
+
+    return String.fromCharCode('A'.charCodeAt(0) + num - 1);
+}
 
 const WCIFProcessor = async (wcif: Competition, file: File) =>
 {
@@ -16,17 +25,15 @@ const WCIFProcessor = async (wcif: Competition, file: File) =>
     try 
     {
         const tempFolder = path.join(os.tmpdir(), 'scramble-temp');
-        fs.mkdirSync(tempFolder, {recursive: true});
+        if (fs.existsSync(tempFolder)) 
+            fs.rmSync(tempFolder, {recursive: true, force: true});
 
-        createFolderFromWCIF(wcif, tempFolder);
+        fs.mkdirSync(tempFolder, {recursive: true});
 
         const zip = new AdmZip(buffer);
 
         const zipEntries = zip.getEntries();
         zipEntries.forEach((entry: IZipEntry) => {
-            console.log(entry.entryName);
-            console.log(scramblePasscodeFileName);
-            console.log(entry.entryName === scramblePasscodeFileName);
             if (entry.entryName === scrambleZipFileName)
             {
                 console.log('Found the scramble zip file');
@@ -47,9 +54,11 @@ const WCIFProcessor = async (wcif: Competition, file: File) =>
             }
         });
 
+        createFolderFromWCIF(wcif, tempFolder);
+
         console.log('Finalized folder structure:');
         const files = fs.readdirSync(tempFolder).filter(f =>
-            fs.statSync(path.join(tempFolder, f)).isFile()
+            fs.statSync(path.join(tempFolder, f)).isFile() || fs.statSync(path.join(tempFolder, f)).isDirectory()
         ).filter(f => !f.endsWith('.zip'));  
 
         console.log(files);
@@ -67,23 +76,121 @@ const WCIFProcessor = async (wcif: Competition, file: File) =>
 const createFolderFromWCIF = (wcif: Competition, tempFolder: string) =>
 {
     const venues: Venue[] = wcif.schedule.venues;
+    const allEventDetails: EventDetail[] = [];
 
     for (const venue of venues)
     {
-        const venuePath = path.join(tempFolder, venue.venueName);
+        const venuePath = path.join(tempFolder, venue.name);
 
         fs.mkdirSync(venuePath, {recursive: true});
+        console.log('Create folder: ', venuePath);
 
         for (const room of venue.rooms)
         {
-            const roomPath = path.join(venuePath, room.roomName);
+            const roomPath = path.join(venuePath, room.name);
 
             fs.mkdirSync(roomPath, {recursive: true});
 
-            for (const activities of room.activities)
+            for (const activity of room.activities)
             {
-                
+                if (!activity.activityCode.startsWith('other-'))
+                {
+                    const splittedActivityCode = activity.activityCode.split('-');
+
+                    const [activityCode, activityRound] = splittedActivityCode as [string, string];
+
+                    const roundNumber = Number.parseInt(activityRound[1]!);
+
+                    const eventDetail: EventDetail = {
+                        eventCode: activityCode,
+                        eventName: EventCodeToFullMap[activityCode as keyof typeof EventCodeToFullMap],
+                        eventVenue: venue.name,
+                        eventRoom: room.name,
+                        eventRound: roundNumber,
+                        eventStartTime: activity.startTime,
+                        eventGroupDetails: []
+                    }
+
+                    if (activityCode === '333fm' || activityCode === '333mbf')
+                    {
+                        const activityAttempt = splittedActivityCode[2];
+                        const attemptNumber = Number.parseInt(activityRound[1]!);
+
+                        eventDetail.eventAttempt = attemptNumber;
+                    }
+                    else
+                    {
+                        for (const child of activity.childActivities)
+                        {
+                            const splittedChildActivityCode = child.activityCode.split('-') as [string, string, string];
+
+                            const childActivityGroup = splittedChildActivityCode[2];
+                            const groupNumber = Number.parseInt(childActivityGroup[1]!);
+
+                            const eventGroupDetails: EventGroupDetail = {
+                                eventGroup: getAlphabetFromNumber(groupNumber),
+                                eventGroupNumber: groupNumber,
+                                eventStartTime: child.startTime
+                            }
+
+                            eventDetail.eventGroupDetails.push(eventGroupDetails);
+                        }
+                    }
+
+                    allEventDetails.push(eventDetail);
+                }
             }
+        }
+    }
+
+    allEventDetails.sort((a, b) => new Date(a.eventStartTime).getTime() - new Date(b.eventStartTime).getTime());
+
+    for (const ed of allEventDetails)
+        console.log(ed)
+
+    reorganizePDFFromEventDetails(allEventDetails, tempFolder);
+}
+
+const reorganizePDFFromEventDetails = (allEventDetails: EventDetail[], tempFolder: string) =>
+{
+    for (const eventDetail of allEventDetails)
+    {
+        if (eventDetail.eventCode === '333mbf')
+            console.log(eventDetail);
+
+        const venueName: string = eventDetail.eventVenue;
+        const venuePath = path.join(tempFolder, venueName);
+        const roomName: string = eventDetail.eventRoom;
+        const roomPath = path.join(venuePath, roomName);
+
+        if (eventDetail.eventGroupDetails.length === 0)
+        {
+            const scrambleFileName: string = `${eventDetail.eventName} Round ${eventDetail.eventRound} Scramble Set A Attempt 1.pdf`;
+
+            const srcPath = path.join(tempFolder, scrambleFileName);
+            const destPath = path.join(roomPath, scrambleFileName);
+
+            fs.mkdirSync(path.dirname(destPath), {recursive: true});
+
+            if (fs.existsSync(srcPath))
+                fs.renameSync(srcPath, destPath);
+            else
+                console.warn(`File not found: ${srcPath}`);
+        }
+
+        for (const groupDetail of eventDetail.eventGroupDetails)
+        {
+            const scrambleFileName: string = `${eventDetail.eventName} Round ${eventDetail.eventRound} Scramble Set ${groupDetail.eventGroup}.pdf`;
+
+            const srcPath = path.join(tempFolder, scrambleFileName);
+            const destPath = path.join(roomPath, scrambleFileName);
+
+            fs.mkdirSync(path.dirname(destPath), {recursive: true});
+
+            if (fs.existsSync(srcPath))
+                fs.renameSync(srcPath, destPath);
+            else
+                console.warn(`File not found: ${srcPath}`);
         }
     }
 }

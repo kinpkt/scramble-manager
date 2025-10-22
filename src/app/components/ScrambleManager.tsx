@@ -4,7 +4,7 @@ import { Container, Button, Form, InputGroup } from 'react-bootstrap';
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import axios from 'axios';
-import type { Competition } from '@/lib/Structure';
+import type { Competition } from '@/lib/Structures';
 
 interface APIResult {
     success?: boolean;
