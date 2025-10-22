@@ -17,7 +17,7 @@ const ScrambleManager = () =>
     const [competitionID, setCompetitionID] = useState<string>('');
     const [wcif, setWCIF] = useState<Competition|null>(null);
     const [scrambleZip, setScrambleZip] = useState<File|null>(null);
-    const [apiResult, setAPIResult] = useState<APIResult|null>(null);
+    const [downloadURL, setDownloadURL] = useState<string>('');
 
     const onFetchWCIFClick = async () =>
     {
@@ -65,10 +65,14 @@ const ScrambleManager = () =>
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                responseType: 'blob', // important for binary data
             });
 
-            setAPIResult(response.data);
-            console.log('Result:', response.data);
+            const blob = new Blob([response.data], { type: 'application/zip' });
+            const url = URL.createObjectURL(blob);
+            setDownloadURL(url);
+
+            alert('Task done. You can now download the reorganized ZIP.');
         } catch (error) {
             console.error('Error calling API:', error);
             alert('Failed to process the result');
@@ -98,6 +102,15 @@ const ScrambleManager = () =>
                     />
                     <Button variant='dark' onClick={onSubmitZipClick}>Submit</Button>
                 </InputGroup>
+                <div className='text-center mt-3'>
+                    <Button
+                        variant='success'
+                        disabled={!downloadURL}
+                        onClick={() => downloadURL && window.open(downloadURL)}
+                    >
+                        Download reorganized .zip
+                    </Button>
+                </div>
             </Container>
         </Container>
     );
