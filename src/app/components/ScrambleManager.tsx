@@ -6,12 +6,6 @@ import type { ChangeEvent } from 'react';
 import axios from 'axios';
 import type { Competition } from '@/lib/Structures';
 
-interface APIResult {
-    success?: boolean;
-    message?: string;
-    [key: string]: any;
-}
-
 const ScrambleManager = () => 
 {
     const [competitionID, setCompetitionID] = useState<string>('');
@@ -46,7 +40,6 @@ const ScrambleManager = () =>
         setScrambleZip(file);
     };
 
-
     const onSubmitZipClick = async () =>
     {
         if (!wcif || !scrambleZip)
@@ -79,6 +72,21 @@ const ScrambleManager = () =>
         }
     }
 
+    const onDownloadClick = () =>
+    {
+        if (!downloadURL) return;
+
+        const a = document.createElement('a');
+        a.href = downloadURL;
+        a.download = `Reorganized-${competitionID}.zip`; // desired filename
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Optional: release the object URL
+        URL.revokeObjectURL(downloadURL);
+    }
+
     return (
         <Container>
             <h1 className='my-3'>Scramble Manager</h1>
@@ -103,11 +111,7 @@ const ScrambleManager = () =>
                     <Button variant='dark' onClick={onSubmitZipClick}>Submit</Button>
                 </InputGroup>
                 <div className='text-center mt-3'>
-                    <Button
-                        variant='success'
-                        disabled={!downloadURL}
-                        onClick={() => downloadURL && window.open(downloadURL)}
-                    >
+                    <Button variant='success' disabled={!downloadURL} onClick={onDownloadClick}>
                         Download reorganized .zip
                     </Button>
                 </div>
