@@ -172,7 +172,7 @@ const reorganizePDFFromEventDetails = (allEventDetails: EventDetail[], tempFolde
 
         if (eventDetail.eventGroupDetails.length === 0)
         {
-            const scrambleFileName: string = `${eventDetail.eventName} Round ${eventDetail.eventRound} Scramble Set A Attempt 1.pdf`;
+            const scrambleFileName: string = `${eventDetail.eventName} Round ${eventDetail.eventRound} Scramble Set A Attempt ${eventDetail.eventAttempt}.pdf`;
 
             const srcPath = path.join(tempFolder, scrambleFileName);
             const destPath = path.join(roomPath, scrambleFileName);
@@ -211,19 +211,65 @@ const reorganizePasscodeFromEventDetails = (eventDetails: EventDetail[], tempFol
     const scramblePasscodeFile = fs.readFileSync(passcodeFilePath, 'utf-8');
     const passcodes = scramblePasscodeFile.split(/\r?\n/);
 
+    const passcodeEntries: PasscodeEntry[] = [];
+
     for (const line of passcodes)
     {
         const match = line.match(passwordRegEx);
 
         if (match)
         {
-            const [, eventName, eventRound, eventGroup, eventAttempt, passcode] = match as [string, string, string, string, string|undefined, string];
+            const [, eventName, eventRound, eventGroup, eventAttempt, passcode] = match as [string, string, string, string, string, string];
 
-            const passcodeEntry: PasscodeEntry = {eventName, eventRound, eventGroup, eventAttempt, passcode};
+            const passcodeEntry: PasscodeEntry = {
+                eventName, 
+                eventRound: Number.parseInt(eventRound), 
+                eventGroup, 
+                eventAttempt: !isNaN(Number.parseInt(eventAttempt)) ? Number.parseInt(eventAttempt) : undefined,
+                eventStartTime: new Date(),
+                passcode
+            };
 
-            console.log(passcodeEntry);
+            const foundDetail = eventDetails.find(ed => 
+                ed.eventName === passcodeEntry.eventName &&
+                ed.eventRound === passcodeEntry.eventRound &&
+                ed.eventGroupDetails.length > 0 &&
+                ed.eventGroupDetails.some(gd => gd.eventGroup === passcodeEntry.eventGroup)
+            );
+
+            if (foundDetail)
+                passcodeEntry.eventStartTime = foundDetail.eventStartTime;
+
+            passcodeEntries.push(passcodeEntry);
         }
     }
+
+    passcodeEntries.sort((a, b) => new Date(a.eventStartTime).getTime() - new Date(b.eventStartTime).getTime());
+
+    let lastDate: string | null = null;
+
+    const outputData = passcodeEntries
+    .map(e => {
+        const dateStr = new Date(e.eventStartTime).toLocaleDateString(); // "MM/DD/YYYY"
+        let header = '';
+
+        if (dateStr !== lastDate) 
+        {
+            header = `=== ${dateStr} ===\n`; // add a date header
+            lastDate = dateStr;
+        }
+
+        const attemptStr = e.eventAttempt !== undefined ? ` Attempt ${e.eventAttempt}` : '';
+
+        return `${header}${e.eventName} Round ${e.eventRound} Scramble Set ${e.eventGroup}${attemptStr}: ${e.passcode}`;
+    })
+    .join('\n');
+
+    fs.unlinkSync(path.join(tempFolder, `${compData.name} - Computer Display PDF Passcodes - SECRET.txt`));
+
+    const reorganizedPasscodeFile = path.join(tempFolder, `[REORGANIZED] ${compData.name} - Computer Display PDF Passcodes - SECRET.txt`);
+    fs.writeFileSync(reorganizedPasscodeFile, outputData, 'utf-8');
+    console.log(`Passcodes written to ${reorganizedPasscodeFile}`); 
 }
 
 export default WCIFProcessor;

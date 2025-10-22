@@ -86,9 +86,10 @@ interface EventGroupDetail
 interface PasscodeEntry
 {
     eventName: string,
-    eventRound: string,
+    eventRound: number,
     eventGroup: string,
-    eventAttempt?: string|undefined,
+    eventAttempt?: number|undefined,
+    eventStartTime: Date;
     passcode: string,
 }
 

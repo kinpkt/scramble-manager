@@ -28,7 +28,7 @@ export async function POST(request: Request)
 
     const zipBuffer = fs.readFileSync(exportZipPath);
 
-    return new NextResponse(zipBuffer, {
+    return new Response(zipBuffer, {
         headers: {
             'Content-Type': 'application/zip',
             'Content-Disposition': `attachment; filename="${wcif.name} - Organized Scrambles.zip"`
