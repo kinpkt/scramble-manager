@@ -83,6 +83,16 @@ interface EventGroupDetail
     eventStartTime: Date;
 }
 
+interface PasscodeEntry
+{
+    eventName: string,
+    eventRound: number,
+    eventGroup: string,
+    eventAttempt?: number|undefined,
+    eventStartTime: Date;
+    passcode: string,
+}
+
 export type {
     Competition,
     Event,
@@ -94,5 +104,6 @@ export type {
     Room,
     Activity,
     EventDetail,
-    EventGroupDetail
+    EventGroupDetail,
+    PasscodeEntry
 };
