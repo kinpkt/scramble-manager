@@ -61,7 +61,12 @@ const WCIFProcessor = async (wcif: Competition, file: File) =>
             fs.statSync(path.join(tempFolder, f)).isFile() || fs.statSync(path.join(tempFolder, f)).isDirectory()
         ).filter(f => !f.endsWith('.zip'));  
 
-        console.log(files);
+        const exportZipPath = path.join(os.tmpdir(), `${wcif.name} - Organized Scrambles.zip`);
+        const exportZip = new AdmZip();
+        exportZip.addLocalFolder(tempFolder);
+        exportZip.writeZip(exportZipPath);
+
+        return {exportZipPath, tempFolder};
     }
     catch (err) 
     {
