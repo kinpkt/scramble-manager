@@ -1,4 +1,4 @@
-import type { Competition, Venue, EventDetail, EventGroupDetail } from '@/lib/Structures';
+import type { Competition, Venue, EventDetail, EventGroupDetail, PasscodeEntry } from '@/lib/Structures';
 import AdmZip from 'adm-zip';
 import type { IZipEntry } from 'adm-zip';
 import fs from 'fs';
@@ -14,10 +14,14 @@ const getAlphabetFromNumber = (num: number) =>
     return String.fromCharCode('A'.charCodeAt(0) + num - 1);
 }
 
+let compData: Competition;
+
 const WCIFProcessor = async (wcif: Competition, file: File) =>
 {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    compData = wcif;
 
     const scrambleZipFileName = `${wcif.name} - Computer Display PDFs.zip`;
     const scramblePasscodeFileName = `${wcif.name} - Computer Display PDF Passcodes - SECRET.txt`;
@@ -145,19 +149,17 @@ const createFolderFromWCIF = (wcif: Competition, tempFolder: string) =>
 
     allEventDetails.sort((a, b) => new Date(a.eventStartTime).getTime() - new Date(b.eventStartTime).getTime());
 
-    for (const ed of allEventDetails)
-        console.log(ed)
+    // for (const ed of allEventDetails)
+    //     console.log(ed)
 
     reorganizePDFFromEventDetails(allEventDetails, tempFolder);
+    reorganizePasscodeFromEventDetails(allEventDetails, tempFolder);
 }
 
 const reorganizePDFFromEventDetails = (allEventDetails: EventDetail[], tempFolder: string) =>
 {
     for (const eventDetail of allEventDetails)
     {
-        if (eventDetail.eventCode === '333mbf')
-            console.log(eventDetail);
-
         const venueName: string = eventDetail.eventVenue;
         const venuePath = path.join(tempFolder, venueName);
         const roomName: string = eventDetail.eventRoom;
@@ -191,6 +193,30 @@ const reorganizePDFFromEventDetails = (allEventDetails: EventDetail[], tempFolde
                 fs.renameSync(srcPath, destPath);
             else
                 console.warn(`File not found: ${srcPath}`);
+        }
+    }
+}
+
+const reorganizePasscodeFromEventDetails = (eventDetails: EventDetail[], tempFolder: string) =>
+{
+    const passwordRegEx = /^(.+) Round ([1-4]) Scramble Set ([A-Z]+)(?: Attempt ([0-9]+))?: ([0-9a-z]+)$/;   
+    const scramblePasscodeFileName = `${compData.name} - Computer Display PDF Passcodes - SECRET.txt`;
+    const passcodeFilePath = path.join(tempFolder, scramblePasscodeFileName);
+
+    const scramblePasscodeFile = fs.readFileSync(passcodeFilePath, 'utf-8');
+    const passcodes = scramblePasscodeFile.split(/\r?\n/);
+
+    for (const line of passcodes)
+    {
+        const match = line.match(passwordRegEx);
+
+        if (match)
+        {
+            const [, eventName, eventRound, eventGroup, eventAttempt, passcode] = match as [string, string, string, string, string|undefined, string];
+
+            const passcodeEntry: PasscodeEntry = {eventName, eventRound, eventGroup, eventAttempt, passcode};
+
+            console.log(passcodeEntry);
         }
     }
 }
