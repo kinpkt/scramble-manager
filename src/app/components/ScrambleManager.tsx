@@ -4,12 +4,7 @@ import { Container, Button, Form, InputGroup } from 'react-bootstrap';
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import axios from 'axios';
-
-interface WCIF {
-    id: string;
-    name: string;
-    [key: string]: any;
-}
+import type { Competition } from '@/lib/Structures';
 
 interface APIResult {
     success?: boolean;
@@ -19,8 +14,8 @@ interface APIResult {
 
 const ScrambleManager = () => 
 {
-    const [competitionID, setCompetitionID] = useState<String>('');
-    const [wcif, setWCIF] = useState<WCIF|null>(null);
+    const [competitionID, setCompetitionID] = useState<string>('');
+    const [wcif, setWCIF] = useState<Competition|null>(null);
     const [scrambleZip, setScrambleZip] = useState<File|null>(null);
     const [apiResult, setAPIResult] = useState<APIResult|null>(null);
 
@@ -28,17 +23,15 @@ const ScrambleManager = () =>
     {
         if (competitionID == '')
         {
-            alert('Please type in the competition ID!');
+            alert('Please type in the competition ID');
             return;
         }
 
         try 
         {
-            const response = await axios.get(
-                `https://www.worldcubeassociation.org/api/v0/competitions/${competitionID}/wcif/public`
-            );
+            const response = await axios.get(`https://www.worldcubeassociation.org/api/v0/competitions/${competitionID}/wcif/public`);
 
-            setWCIF(response.data);
+            setWCIF(response.data as Competition);
             console.log('WCIF:', response.data);
 
             alert(`Fetched WCIF for ${response.data.name}`);

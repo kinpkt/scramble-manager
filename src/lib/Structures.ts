@@ -1,6 +1,6 @@
 interface Competition
 {
-    competitionName: string;
+    name: string;
     events: Event[];
     schedule: Schedule;
 }
@@ -42,22 +42,22 @@ interface Schedule
 
 interface Venue
 {
-    venueID: number;
-    venueName: string;
+    id: number;
+    name: string;
     rooms: Room[];
 }
 
 interface Room
 {
-    roomID: number;
-    roomName: string;
+    id: number;
+    name: string;
     activities: Activity[];
 }
 
 interface Activity
 {
-    activityID: number;
-    activityName: string;
+    id: number;
+    name: string;
     activityCode: string;
     startTime: Date;
     endTime: Date;
@@ -71,7 +71,7 @@ interface EventDetail
     eventVenue: string;
     eventRoom: string;
     eventRound: number;
-    eventAttempt: number;
+    eventAttempt?: number;
     eventGroupDetails: EventGroupDetail[];
     eventStartTime: Date;
 }
@@ -82,3 +82,17 @@ interface EventGroupDetail
     eventGroupNumber: number;
     eventStartTime: Date;
 }
+
+export type {
+    Competition,
+    Event,
+    Round,
+    TimeLimit,
+    AdvancementCondition,
+    Schedule,
+    Venue,
+    Room,
+    Activity,
+    EventDetail,
+    EventGroupDetail
+};
